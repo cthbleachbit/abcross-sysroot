@@ -27,7 +27,7 @@ test = [
 ]
 
 [project.scripts]
-abcross-sysroot = "abcross:main"
+abcross-sysroot-manager = "abcross:cli.main"
 
 [build-system]
 requires = ["setuptools>=43.0.0", "wheel"]
