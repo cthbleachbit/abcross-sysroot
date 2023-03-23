@@ -1,0 +1,12 @@
+# Python stuff
+*.pyc
+*.pyo
+__pycache__
+
+# Pycharm stuff
+.idea
+
+# Text editor stuff
+*.swp
+*.lck
+*~
