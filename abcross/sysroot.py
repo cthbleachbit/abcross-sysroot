@@ -26,7 +26,7 @@ class Sysroot:
         if argv is None:
             argv = ["/bin/sh"]
         # Checks if we can execute stuff in this Sysroot...
-        if not self.arch.match_current_arch() and not self.arch.has_qemu_program():
+        if not self.arch.match_current_arch() and not self.arch.have_qemu():
             logger.error(f"You can't run program built for {self.arch}. Install {self.arch.qemu_bin()} first.")
             return None
         # Form systemd-nspawn call.

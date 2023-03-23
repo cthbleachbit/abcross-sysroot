@@ -60,7 +60,7 @@ class Architecture(Enum):
             case _:
                 return None
 
-    def has_qemu_program(self) -> str | None:
+    def have_qemu(self) -> str | None:
         """Return whether qemu static binary or none if this is not found on the system"""
         base_name = self.qemu_bin()
         binfmt_reg_name = f"/proc/sys/fs/binfmt_misc/qemu-{self.qemu_arch()}"
