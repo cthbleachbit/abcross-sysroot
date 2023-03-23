@@ -1,0 +1,29 @@
+[project]
+name = "abcross-sysroot"
+description = "Sysroot manager for AOSC OS cross-compiling toolchains"
+version = "0.0.0"
+authors = [
+    { name = "Tianhao Chai", email = "cth451@gmail.com" }
+]
+dependencies = [
+    "pycurl >= 7.40"
+]
+license = { file = "COPYING" }
+keywords = ["development"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.scripts]
+abcross-sysroot = "abcross:main"
+
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
