@@ -11,17 +11,23 @@ logger = logging.getLogger("tar")
 def download_tarball(url: str, dest_file: PosixPath, sha256sum: str | None) -> None:
     """Download a file at specific url to a specific path and verify sha256sum if provided"""
     checksumming = hashlib.sha256()
+    count_bytes = 0
     with urlopen(url) as incoming, open(dest_file, "wb") as save:
         length = 1024 * 1024
+        print("Downloading...", end='\r')
         while True:
             buf = incoming.read(length)
             if not buf:
                 break
+            count_bytes += len(buf)
+            print(f"Downloading... Bytes: {count_bytes}", end='\r')
             save.write(buf)
             if sha256sum is not None:
                 checksumming.update(buf)
+        logger.info(f"Tarball downloaded to {dest_file}. Written {count_bytes} bytes.")
     # Verify checksum
     if sha256sum is not None and checksumming.hexdigest() != sha256sum:
+        dest_file.unlink(missing_ok=True)
         raise RuntimeError("Downloaded file has wrong checksum!\n"
                            f"Expected: {sha256sum}\n"
                            f"Got:      {checksumming.hexdigest()}"
@@ -46,8 +52,6 @@ def extract_tarball(tarball: PosixPath, extract_dir: PosixPath, silent=True) -> 
     while extract.poll() is None:
         out = extract.stdout.readline()
         count_files += len(out.splitlines())
-        if len(out.splitlines()) != 1:
-            print("WTF!")
         if not silent and count_files > 0:
             print(f"Extracting... Written Files: {count_files}", end='\r')
     result = extract.poll()

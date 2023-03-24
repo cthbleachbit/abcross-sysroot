@@ -19,6 +19,12 @@ class Architecture(Enum):
     PPC64EL = "ppc64el"
     RISCV64 = "riscv64"
     MIPS64R6EL = "mips64r6el"
+    ARMV4 = "armv4"  # retro
+    ARMV6HF = "armv6hf"  # retro
+    ARMV7HF = "armv7hf"  # retro
+    M68K = "m68k"  # retro
+    PPC64 = "ppc64"  # retro pre-power 8 big endian ppc 64
+    I486 = "i486"
 
     def qemu_arch(self) -> str:
         """Return architecture name in qemu nomenclature"""
@@ -37,6 +43,14 @@ class Architecture(Enum):
                 return "riscv64"
             case Architecture.MIPS64R6EL:
                 return "mips64el"
+            case Architecture.ARMV4 | Architecture.ARMV6HF | Architecture.ARMV7HF:
+                return "arm"
+            case Architecture.M68K:
+                return "m68k"
+            case Architecture.PPC64:
+                return "ppc64"
+            case Architecture.I486:
+                return "i386"
             case _:
                 raise ValueError
 
@@ -60,7 +74,7 @@ class Architecture(Enum):
             case "mips64":
                 # FIXME: python can't tell apart loongson3 / other flavor of mips
                 return None
-            case _:
+            case _:  # Retro arches and other stuff is out of scope
                 return None
 
     def have_qemu(self) -> str | None:
@@ -89,7 +103,7 @@ class Architecture(Enum):
 
     def standard_sysroot(self) -> PosixPath:
         """Returns standard sysroot location for AOSC OS"""
-        return PosixPath(f"/var/ab/cross-root/{self}")
+        return PosixPath(f"/var/ab/cross-root/{self.value}")
 
 
 def privileged_call(argv: List[str], interactive: bool) -> (str, str, int):
@@ -97,7 +111,7 @@ def privileged_call(argv: List[str], interactive: bool) -> (str, str, int):
     call_args = ["sudo"] if need_sudo else []
     call_args.extend(argv)
     if need_sudo:
-        print(f"!!! About to run {call_args}")
+        logger.info(f"!!! About to run {call_args}")
     result = subprocess.run(call_args, capture_output=not interactive, text=True)
     return result.stdout, result.stderr, result.returncode
 

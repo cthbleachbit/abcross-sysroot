@@ -7,7 +7,6 @@ from typing import List
 from .common import Architecture, privileged_call, regular_call
 
 logger = logging.getLogger("sysroot")
-logger.setLevel(logging.DEBUG)
 
 
 @dataclass
@@ -110,20 +109,22 @@ class Sysroot:
         :param packages: the list of names of packages to install.
         :return: None - if error occurs exception will be thrown.
         """
-        dpkg_root = self.path.resolve()
         dpkg_admin_dir = (self.path / "var/lib/dpkg").resolve()
         # Sanity check: admin dir must exist and is a directory.
         if not dpkg_admin_dir.is_dir():
             raise EnvironmentError(f"{dpkg_admin_dir} in sysroot doesn't exist or is not a directory.")
         # Before this we need to refresh APT sources inside the container...
+        logger.info("Refreshing source metadata...")
         _, _, ret = self.apt_call(["update", "-yy"], containerize=True, interactive=True)
         if update:
+            logger.info("You have requested full system upgrade...")
             _, _, ret = self.apt_call(["full-upgrade", "-yy", "-o", "Dpkg::Options::=--force-confnew"],
                                       containerize=True, interactive=True)
             if ret != 0:
                 raise OSError(f"Cannot upgrade in the sysroot. Apt returned {ret}. You may need to manually correct "
                               f"this problem.")
         # Download those packages.
+        logger.info("Downloading packages...")
         temp_download_dir = tempfile.mkdtemp(prefix="abcross-download-")
         download_args = ["install", "--download-only", "-yy", "-o", "Dir::Cache::archives=/root"]
         download_args.extend(packages)
@@ -136,13 +137,6 @@ class Sysroot:
             ])
         if ret != 0:
             raise OSError(f"Cannot retrieve packages from the sysroot. Apt returned {ret}.")
-        # Now unpack stuff over
-        dpkg_call = [
-            "--force-architecture",  # We are almost certainly going to see some exotic packages...
-            "--force-depends", "--force-depends-version",  # Screw dependencies
-            "--no-triggers",
-            "--unpack",
-        ]
         debs_iter = PosixPath(temp_download_dir).iterdir()
         debs = [deb.resolve() for deb in debs_iter if deb.name.endswith(".deb")]
         if len(debs) == 0:
@@ -150,11 +144,20 @@ class Sysroot:
             logger.warning(f"This is because some packages might have already been unpacked into this sysroot before.")
             logger.debug(f"Requested packages: {packages}")
             return None
+        # Now unpack stuff over
+        logger.info("Unpacking packages...")
+        dpkg_call = [
+            "--force-architecture",  # We are almost certainly going to see some exotic packages...
+            "--force-depends", "--force-depends-version",  # Screw dependencies
+            "--no-triggers",
+            "--unpack",
+        ]
         dpkg_call.extend(debs)
         _, _, ret = self.dpkg_call(dpkg_call, containerize=False, sudo=True)
         if ret != 0:
             raise OSError(f"Cannot unpack packages into the sysroot. Dpkg returned {ret}.")
         # Get rid of installed packages
+        logger.info("Cleaning up...")
         _, _, ret = privileged_call(["rm", "-rf", temp_download_dir], interactive=False)
         if ret != 0:
             raise OSError(f"Cannot remove temporary download directory {temp_download_dir}")

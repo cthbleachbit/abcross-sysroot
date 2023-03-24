@@ -1,8 +1,11 @@
 import argparse
+import logging
 import sys
+from pathlib import PosixPath
 
 from .common import Architecture
-from .distribution import Variant
+from .distribution import Variant, get_manifest, get_release_tarball_info, do_deploy
+from .sysroot import Sysroot
 
 
 def handle_arguments():
@@ -11,6 +14,12 @@ def handle_arguments():
                         required=True,
                         help="Work on the sysroot for specified architecture",
                         type=Architecture
+                        )
+    parser.add_argument("-s", "--sysroot",
+                        required=False,
+                        help="Path to the sysroot. Default to \"/var/ab/cross-root/<arch>\"",
+                        type=PosixPath,
+                        default=None
                         )
     subparsers = parser.add_subparsers(
         title="commands",
@@ -36,6 +45,11 @@ def handle_arguments():
         help="Force overwriting a sysroot directory with existing data.",
         action="store_true"
     )
+    subparser_deploy.add_argument(
+        "-c", "--cache",
+        help="Save tarballs to ~/.cache/abcross/. Otherwise they are saved to tmpfs and deleted once we're done.",
+        action="store_true"
+    )
     subparser_enter = subparsers.add_parser("enter",
                                             help="Start an interactive shell or program in the sysroot.")
     subparser_enter.add_argument(
@@ -47,6 +61,11 @@ def handle_arguments():
     subparsers_unpack = subparsers.add_parser("unpack",
                                               help="Unpack packages and their dependencies in the sysroot.")
     subparsers_unpack.add_argument(
+        "-u", "--update",
+        action="store_true",
+        help="Do a full upgrade before unpacking specified packages"
+    )
+    subparsers_unpack.add_argument(
         "packages",
         nargs='+',
         help="Space separated list of package names to install."
@@ -54,22 +73,19 @@ def handle_arguments():
     return parser.parse_args()
 
 
-def do_unpack(args):
-    pass
-
-
-def do_enter(args):
-    pass
-
-
-def do_deploy(args):
-    pass
-
-
 def main():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s', )
     args = handle_arguments()
-    print(args)
-    sys.exit(5)
+    a: Architecture = args.arch
+    p: PosixPath = a.standard_sysroot() if args.sysroot is None else args.sysroot
+    s = Sysroot(a, PosixPath(p))
+    match args.command:
+        case "enter":
+            s.containerize(args.argv, interactive=True)
+        case "unpack":
+            s.unpack(args.packages, update=args.update)
+        case _:
+            sys.exit(do_deploy(s, args))
 
 
 if __name__ == "__main__":
