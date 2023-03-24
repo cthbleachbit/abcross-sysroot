@@ -7,7 +7,7 @@ from urllib.request import urlopen
 from typing import Dict, Any, List
 
 from .common import Architecture
-from .io import download
+from .tar import download_tarball
 
 release_url_base = "/aosc-os/"
 
@@ -86,4 +86,4 @@ def get_tarball(tarball_info: Dict[str, int | str],
     expected_sum = tarball_info["sha256sum"]
     tarball_basename = PosixPath(tarball_info["path"]).name
     tarball_save_path = dest_dir.resolve() / tarball_basename
-    download(urlunparse(download_url), tarball_save_path, expected_sum)
+    download_tarball(urlunparse(download_url), tarball_save_path, expected_sum)

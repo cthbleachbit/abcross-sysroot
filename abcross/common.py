@@ -1,8 +1,11 @@
 import logging
+import os
 import platform
+import re
+import subprocess
 from enum import Enum
 from pathlib import PosixPath
-from typing import Optional
+from typing import Optional, List
 
 logger = logging.getLogger("common")
 
@@ -87,3 +90,18 @@ class Architecture(Enum):
     def standard_sysroot(self) -> PosixPath:
         """Returns standard sysroot location for AOSC OS"""
         return PosixPath(f"/var/ab/cross-root/{self}")
+
+
+def privileged_call(argv: List[str], interactive: bool) -> (str, str, int):
+    need_sudo = os.geteuid() != 0
+    call_args = ["sudo"] if need_sudo else []
+    call_args.extend(argv)
+    if need_sudo:
+        print(f"!!! About to run {call_args}")
+    result = subprocess.run(call_args, capture_output=not interactive, text=True)
+    return result.stdout, result.stderr, result.returncode
+
+
+def regular_call(argv: List[str], interactive: bool) -> (str, str, int):
+    result = subprocess.run(argv, capture_output=not interactive, text=True)
+    return result.stdout, result.stderr, result.returncode

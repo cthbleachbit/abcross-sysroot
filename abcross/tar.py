@@ -2,14 +2,13 @@ import hashlib
 import logging
 import subprocess
 from pathlib import PosixPath
-from time import sleep
 from typing import List
 from urllib.request import urlopen
 
-logger = logging.getLogger("io")
+logger = logging.getLogger("tar")
 
 
-def download(url: str, dest_file: PosixPath, sha256sum: str | None) -> None:
+def download_tarball(url: str, dest_file: PosixPath, sha256sum: str | None) -> None:
     """Download a file at specific url to a specific path and verify sha256sum if provided"""
     checksumming = hashlib.sha256()
     with urlopen(url) as incoming, open(dest_file, "wb") as save:
