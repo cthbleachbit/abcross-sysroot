@@ -4,7 +4,7 @@ import sys
 from pathlib import PosixPath
 
 from .common import Architecture
-from .distribution import Variant, get_manifest, get_release_tarball_info, do_deploy
+from .distribution import Variant, do_deploy
 from .sysroot import Sysroot
 
 

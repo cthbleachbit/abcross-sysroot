@@ -1,12 +1,9 @@
 [project]
-name = "abcross-sysroot"
+name = "abcross"
 description = "Sysroot manager for AOSC OS cross-compiling toolchains"
-version = "0.0.0"
+version = "0.0.1"
 authors = [
     { name = "Tianhao Chai", email = "cth451@gmail.com" }
-]
-dependencies = [
-    "urllib"
 ]
 license = { file = "COPYING" }
 keywords = ["development"]
@@ -27,8 +24,11 @@ test = [
 ]
 
 [project.scripts]
-abcross-sysroot-manager = "abcross:cli.main"
+abcross-sysroot-manager = "abcross.cli:main"
 
 [build-system]
 requires = ["setuptools>=43.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+exclude = ["abcross_tests"]
